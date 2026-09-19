@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Music From My Heart</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="notebook">
+
+        <div class="spiral">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <header>
+            <div class="small-title">MY PERSONAL JOURNAL</div>
+
+            <h1>Music From My Heart</h1>
+
+            <p>
+                A little place for my memories, thoughts, music, and feelings.
+            </p>
+        </header>
+
+        <main>
+
+            <section class="welcome">
+
+                <div class="tape"></div>
+
+                <h2>Dear Diary,</h2>
+
+                <p>
+                    Every memory deserves a page.
+                    Write down what is on your heart and let your memories stay.
+                </p>
+
+                <a href="/write">
+                    <button type="button">＋ Write a New Memory</button>
+                </a>
+
+            </section>
+
+            <section class="entries">
+
+                <div class="section-title">
+                    <span>♡</span>
+                    <h2>My Memories</h2>
+                    <span>♡</span>
+                </div>
+
+                {% if entries %}
+
+                    <div class="page-book">
+
+                        {% for index, item in entries|reverse %}
+
+                            <article class="entry-card notebook-page">
+
+                                <div class="paper-tape"></div>
+
+                                <div class="page-number">
+                                    Page {{ loop.index }}
+                                </div>
+
+                                <div class="entry-header">
+
+                                    <div>
+                                        <h3>{{ item.title }}</h3>
+                                        <p class="entry-date">{{ item.date }}</p>
+                                    </div>
+
+                                    <div class="emotion">
+
+                                        {% if item.mood == "joy" %}
+
+                                            <div class="emotion-face">😊</div>
+                                            <span>Joy</span>
+
+                                        {% elif item.mood == "sadness" %}
+
+                                            <div class="emotion-face">😢</div>
+                                            <span>Sadness</span>
+
+                                        {% elif item.mood == "anger" %}
+
+                                            <div class="emotion-face">😠</div>
+                                            <span>Anger</span>
+
+                                        {% elif item.mood == "fear" %}
+
+                                            <div class="emotion-face">😨</div>
+                                            <span>Fear</span>
+
+                                        {% elif item.mood == "love" %}
+
+                                            <div class="emotion-face">🥰</div>
+                                            <span>Love</span>
+
+                                        {% elif item.mood == "surprise" %}
+
+                                            <div class="emotion-face">😲</div>
+                                            <span>Surprise</span>
+
+                                        {% elif item.mood == "disgust" %}
+
+                                            <div class="emotion-face">🤢</div>
+                                            <span>Disgust</span>
+
+                                        {% else %}
+
+                                            <div class="emotion-face">😐</div>
+                                            <span>{{ item.mood }}</span>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                                <div class="line"></div>
+
+                                <p class="entry-text">
+                                    {{ item.entry }}
+                                </p>
+
+
+                                {% if item.photos %}
+
+                                    <div class="entry-photos">
+
+                                        <p class="memory-label">
+                                            📎 Little moments
+                                        </p>
+
+                                        <div class="photo-grid">
+
+                                            {% for photo in item.photos %}
+
+                                                <img
+                                                    src="{{ url_for('static', filename='photos/' + photo) }}"
+                                                    alt="Memory photo"
+                                                >
+
+                                            {% endfor %}
+
+                                        </div>
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                {% if item.song %}
+
+                                    <div class="entry-song">
+
+                                        <div class="music-note">♫</div>
+
+
+                                        {% if item.song is mapping %}
+
+
+                                            {% if item.song.artwork_url %}
+
+                                                <img
+                                                    class="song-artwork"
+                                                    src="{{ item.song.artwork_url }}"
+                                                    alt="{{ item.song.track_name }}"
+                                                >
+
+                                            {% endif %}
+
+
+                                            <div class="song-info">
+
+                                                <p class="music-title">
+                                                    {{ item.song.track_name }}
+                                                </p>
+
+                                                <p class="music-artist">
+                                                    {{ item.song.artist_name }}
+                                                </p>
+
+
+                                                {% if item.song.preview_url %}
+
+                                                    <p class="song-preview-label">
+                                                        30-second preview
+                                                    </p>
+
+                                                    <audio
+                                                        controls
+                                                        preload="none"
+                                                    >
+                                                        <source
+                                                            src="{{ item.song.preview_url }}"
+                                                            type="audio/mpeg"
+                                                        >
+
+                                                        Your browser does not support the audio player.
+
+                                                    </audio>
+
+                                                {% else %}
+
+                                                    <p class="ai-note">
+                                                        No preview available for this track.
+                                                    </p>
+
+                                                {% endif %}
+
+                                            </div>
+
+
+                                        {% else %}
+
+
+                                            <div class="song-info">
+
+                                                <p class="music-title">
+                                                    A song from this memory
+                                                </p>
+
+                                                <audio
+                                                    controls
+                                                    preload="none"
+                                                >
+                                                    <source
+                                                        src="{{ url_for('static', filename='uploads/' + item.song) }}"
+                                                        type="audio/mpeg"
+                                                    >
+
+                                                    Your browser does not support the audio player.
+
+                                                </audio>
+
+                                            </div>
+
+
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <div class="entry-actions">
+
+                                    <a href="{{ url_for('edit', index=index) }}">
+
+                                        <button
+                                            type="button"
+                                            class="edit-button"
+                                        >
+                                            ✎ Edit
+                                        </button>
+
+                                    </a>
+
+
+                                    <form
+                                        action="{{ url_for('delete', index=index) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Are you sure you want to delete this memory?');"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="delete-button"
+                                        >
+                                            ♡ Delete
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+
+                                <div class="heart-decoration">
+                                    ♡
+                                </div>
+
+                            </article>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="page-navigation">
+
+                        <button
+                            type="button"
+                            id="previousPage"
+                            class="page-button"
+                            onclick="previousPage()"
+                        >
+                            ← Previous
+                        </button>
+
+
+                        <div class="page-counter">
+
+                            <span id="currentPage">1</span>
+
+                            <span>of</span>
+
+                            <span id="totalPages">
+                                {{ entries|length }}
+                            </span>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            id="nextPage"
+                            class="page-button"
+                            onclick="nextPage()"
+                        >
+                            Next →
+                        </button>
+
+                    </div>
+
+
+                {% else %}
+
+
+                    <div class="empty-page">
+
+                        <div class="empty-face">
+                            📖
+                        </div>
+
+                        <p>
+                            No memories yet.
+                        </p>
+
+                        <span>
+                            Your first page is waiting to be written.
+                        </span>
+
+                    </div>
+
+
+                {% endif %}
+
+            </section>
+
+        </main>
+
+
+        <footer>
+            Made with love ♡ and a little bit of music.
+        </footer>
+
+    </div>
+
+
+    <script>
+
+        let currentPage = 0;
+
+        const pages = document.querySelectorAll(".notebook-page");
+
+        const previousButton =
+            document.getElementById("previousPage");
+
+        const nextButton =
+            document.getElementById("nextPage");
+
+        const currentPageText =
+            document.getElementById("currentPage");
+
+
+        function showPage(page) {
+
+            if (pages.length === 0) {
+                return;
+            }
+
+
+            pages.forEach((item, index) => {
+
+                if (index === page) {
+
+                    item.classList.add("active-page");
+
+                } else {
+
+                    item.classList.remove("active-page");
+
+                }
+
+            });
+
+
+            currentPageText.textContent =
+                page + 1;
+
+
+            previousButton.disabled =
+                page === 0;
+
+
+            nextButton.disabled =
+                page === pages.length - 1;
+
+        }
+
+
+        function nextPage() {
+
+            if (currentPage < pages.length - 1) {
+
+                currentPage++;
+
+                showPage(currentPage);
+
+            }
+
+        }
+
+
+        function previousPage() {
+
+            if (currentPage > 0) {
+
+                currentPage--;
+
+                showPage(currentPage);
+
+            }
+
+        }
+
+
+        document.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "ArrowRight") {
+
+                    nextPage();
+
+                }
+
+
+                if (event.key === "ArrowLeft") {
+
+                    previousPage();
+
+                }
+
+            }
+        );
+
+
+        showPage(currentPage);
+
+    </script>
+
+</body>
+
+</html>

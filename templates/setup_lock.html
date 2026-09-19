@@ -1,0 +1,145 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Set Your Lock | Music From My Heart</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="notebook">
+
+        <div class="spiral">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <header>
+
+            <div class="small-title">
+                YOUR PRIVATE DIARY
+            </div>
+
+            <h1>
+                Music From My Heart
+            </h1>
+
+            <p>
+                Create a lock to keep your memories private.
+            </p>
+
+        </header>
+
+        <main>
+
+            <section class="write-page lock-page">
+
+                <div class="write-tape"></div>
+
+                <div class="lock-icon">
+                    🔒
+                </div>
+
+                <div class="write-heading">
+
+                    <h2>
+                        Create Your Lock
+                    </h2>
+
+                    <p>
+                        Choose a PIN you'll remember.
+                    </p>
+
+                </div>
+
+                {% if error %}
+
+                    <p class="lock-error">
+                        {{ error }}
+                    </p>
+
+                {% endif %}
+
+                <form
+                    method="POST"
+                    action="{{ url_for('setup_lock') }}"
+                >
+
+                    <div class="form-section">
+
+                        <label for="pin">
+                            Create PIN
+                        </label>
+
+                        <input
+                            type="password"
+                            id="pin"
+                            name="pin"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            maxlength="8"
+                            placeholder="Enter 4–8 digits"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-section">
+
+                        <label for="confirm_pin">
+                            Confirm PIN
+                        </label>
+
+                        <input
+                            type="password"
+                            id="confirm_pin"
+                            name="confirm_pin"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            maxlength="8"
+                            placeholder="Enter your PIN again"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="save-area">
+
+                        <p>
+                            Your PIN is securely stored as a hash.
+                        </p>
+
+                        <button type="submit">
+                            Create My Lock ♡
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+        <footer>
+            Your memories belong to you.
+        </footer>
+
+    </div>
+
+</body>
+</html>

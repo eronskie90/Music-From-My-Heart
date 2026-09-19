@@ -1,0 +1,123 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Unlock | Music From My Heart</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="notebook">
+
+        <div class="spiral">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <header>
+
+            <div class="small-title">
+                PRIVATE DIARY
+            </div>
+
+            <h1>
+                Music From My Heart
+            </h1>
+
+            <p>
+                Your memories are waiting for you.
+            </p>
+
+        </header>
+
+        <main>
+
+            <section class="write-page lock-page">
+
+                <div class="write-tape"></div>
+
+                <div class="lock-icon">
+                    🔐
+                </div>
+
+                <div class="write-heading">
+
+                    <h2>
+                        Diary Locked
+                    </h2>
+
+                    <p>
+                        Enter your PIN to continue.
+                    </p>
+
+                </div>
+
+                {% if error %}
+
+                    <p class="lock-error">
+                        {{ error }}
+                    </p>
+
+                {% endif %}
+
+                <form
+                    method="POST"
+                    action="{{ url_for('lock') }}"
+                >
+
+                    <div class="form-section">
+
+                        <label for="pin">
+                            Your PIN
+                        </label>
+
+                        <input
+                            type="password"
+                            id="pin"
+                            name="pin"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            maxlength="8"
+                            placeholder="Enter your PIN"
+                            autofocus
+                            required
+                        >
+
+                    </div>
+
+                    <div class="save-area">
+
+                        <button type="submit">
+                            Unlock My Memories ♡
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+        <footer>
+            Every memory deserves a safe place.
+        </footer>
+
+    </div>
+
+</body>
+</html>

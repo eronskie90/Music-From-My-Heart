@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Write Entry | Music From My Heart</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="notebook write-notebook">
+
+        <div class="spiral">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <header>
+            <div class="small-title">A NEW PAGE</div>
+
+            <h1>Write From The Heart</h1>
+
+            <p>
+                Put your thoughts into words and let your memories stay.
+            </p>
+        </header>
+
+        <main>
+
+            <section class="write-page">
+
+                <div class="write-tape"></div>
+
+                <a href="/" class="back-link">
+                    ← Back to My Memories
+                </a>
+
+                <div class="write-heading">
+                    <h2>Dear Diary,</h2>
+
+                    <p>
+                        What happened today?
+                    </p>
+                </div>
+
+                <form
+                    action="/save"
+                    method="POST"
+                    enctype="multipart/form-data"
+                >
+
+                    <div class="form-section">
+
+                        <label for="title">
+                            Memory Title
+                        </label>
+
+                        <input
+                            type="text"
+                            id="title"
+                            name="title"
+                            placeholder="Give this memory a name..."
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-section">
+
+                        <label for="date">
+                            Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="date"
+                            name="date"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-section">
+
+                        <label for="entry">
+                            Your Story
+                        </label>
+
+                        <textarea
+                            id="entry"
+                            name="entry"
+                            rows="12"
+                            placeholder="Write whatever is on your mind...
+
+There are no right or wrong words here."
+                            required
+                        ></textarea>
+
+                        <p class="ai-note">
+                            Your entry will be analyzed automatically to detect its emotion.
+                        </p>
+
+                    </div>
+
+
+                    <div class="attachment-box">
+
+                        <div class="attachment-title">
+                            Add to this memory
+                        </div>
+
+
+                        <div class="attachment">
+
+                            <label for="photos">
+                                📎 Photos
+                            </label>
+
+                            <p>
+                                Add photos from this memory. Optional.
+                            </p>
+
+                            <input
+                                type="file"
+                                id="photos"
+                                name="photos"
+                                accept="image/*"
+                                multiple
+                            >
+
+                        </div>
+
+
+                        <div class="attachment song-search-box">
+
+                            <label for="songSearch">
+                                ♫ A Song
+                            </label>
+
+                            <p>
+                                Search for a song that belongs to this memory. Optional.
+                            </p>
+
+
+                            <input
+                                type="text"
+                                id="songSearch"
+                                placeholder="Search for a song or artist..."
+                                autocomplete="off"
+                            >
+
+
+                            <div
+                                id="songStatus"
+                                class="song-status"
+                            ></div>
+
+
+                            <div
+                                id="songResults"
+                                class="song-results"
+                            ></div>
+
+
+                            <div
+                                id="songSelected"
+                                class="song-selected"
+                            >
+
+                                <img
+                                    id="songSelectedArt"
+                                    src=""
+                                    alt=""
+                                >
+
+                                <div>
+
+                                    <p
+                                        id="songSelectedName"
+                                        class="song-selected-name"
+                                    ></p>
+
+                                    <p
+                                        id="songSelectedArtist"
+                                        class="song-selected-artist"
+                                    ></p>
+
+                                </div>
+
+
+                                <button
+                                    type="button"
+                                    id="songClear"
+                                    title="Remove song"
+                                >
+                                    ✕
+                                </button>
+
+                            </div>
+
+
+                            <input
+                                type="hidden"
+                                id="song_track_id"
+                                name="song_track_id"
+                                value=""
+                            >
+
+                            <input
+                                type="hidden"
+                                id="song_track_name"
+                                name="song_track_name"
+                                value=""
+                            >
+
+                            <input
+                                type="hidden"
+                                id="song_artist_name"
+                                name="song_artist_name"
+                                value=""
+                            >
+
+                            <input
+                                type="hidden"
+                                id="song_artwork_url"
+                                name="song_artwork_url"
+                                value=""
+                            >
+
+                            <input
+                                type="hidden"
+                                id="song_preview_url"
+                                name="song_preview_url"
+                                value=""
+                            >
+
+                            <input
+                                type="hidden"
+                                id="song_action"
+                                name="song_action"
+                                value=""
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="save-area">
+
+                        <p>
+                            Your emotion will be detected automatically.
+                        </p>
+
+                        <button type="submit">
+                            Save This Memory ♡
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+
+        <footer>
+            Every page holds a little piece of your story.
+        </footer>
+
+    </div>
+
+
+    <script>
+
+        (function () {
+
+            const searchInput = document.getElementById("songSearch");
+            const resultsBox = document.getElementById("songResults");
+            const statusBox = document.getElementById("songStatus");
+
+            const selectedBox = document.getElementById("songSelected");
+            const selectedArt = document.getElementById("songSelectedArt");
+            const selectedName = document.getElementById("songSelectedName");
+            const selectedArtist = document.getElementById("songSelectedArtist");
+
+            const clearButton = document.getElementById("songClear");
+            const actionField = document.getElementById("song_action");
+
+            const fieldTrackId = document.getElementById("song_track_id");
+            const fieldTrackName = document.getElementById("song_track_name");
+            const fieldArtistName = document.getElementById("song_artist_name");
+            const fieldArtworkUrl = document.getElementById("song_artwork_url");
+            const fieldPreviewUrl = document.getElementById("song_preview_url");
+
+            let debounceTimer = null;
+            let previewAudio = null;
+
+
+            function stopPreview() {
+
+                if (previewAudio) {
+
+                    previewAudio.pause();
+                    previewAudio.currentTime = 0;
+                    previewAudio = null;
+
+                }
+
+            }
+
+
+            function clearResults() {
+
+                resultsBox.innerHTML = "";
+                resultsBox.style.display = "none";
+
+            }
+
+
+            function setStatus(message, type) {
+
+                statusBox.textContent = message;
+                statusBox.className = "song-status";
+
+                if (type) {
+                    statusBox.classList.add(type);
+                }
+
+            }
+
+
+            function selectSong(song) {
+
+                fieldTrackId.value = song.track_id || "";
+                fieldTrackName.value = song.track_name || "";
+                fieldArtistName.value = song.artist_name || "";
+                fieldArtworkUrl.value = song.artwork_url || "";
+                fieldPreviewUrl.value = song.preview_url || "";
+
+                actionField.value = "";
+
+
+                selectedArt.src = song.artwork_url || "";
+                selectedArt.alt = song.track_name || "";
+
+                selectedName.textContent =
+                    song.track_name || "";
+
+                selectedArtist.textContent =
+                    song.artist_name || "";
+
+
+                selectedBox.style.display = "flex";
+
+                clearResults();
+
+                setStatus("", "");
+
+                searchInput.value = "";
+
+            }
+
+
+            function renderResults(songs) {
+
+                resultsBox.innerHTML = "";
+
+
+                if (!Array.isArray(songs) || songs.length === 0) {
+
+                    resultsBox.style.display = "none";
+
+                    setStatus(
+                        "No songs found. Try another title or artist.",
+                        "song-status-info"
+                    );
+
+                    return;
+
+                }
+
+
+                setStatus("", "");
+
+                songs.forEach(function (song) {
+
+                    const row =
+                        document.createElement("div");
+
+                    row.className =
+                        "song-result-row";
+
+
+                    const artwork =
+                        document.createElement("img");
+
+                    artwork.src =
+                        song.artwork_url || "";
+
+                    artwork.alt =
+                        song.track_name || "";
+
+
+                    const info =
+                        document.createElement("div");
+
+                    info.className =
+                        "song-result-info";
+
+
+                    const name =
+                        document.createElement("p");
+
+                    name.className =
+                        "song-result-name";
+
+                    name.textContent =
+                        song.track_name || "";
+
+
+                    const artist =
+                        document.createElement("p");
+
+                    artist.className =
+                        "song-result-artist";
+
+                    artist.textContent =
+                        song.artist_name || "";
+
+
+                    info.appendChild(name);
+                    info.appendChild(artist);
+
+
+                    const previewButton =
+                        document.createElement("button");
+
+                    previewButton.type =
+                        "button";
+
+                    previewButton.className =
+                        "song-preview-button";
+
+                    previewButton.textContent =
+                        "▶";
+
+                    previewButton.title =
+                        song.preview_url
+                            ? "Preview song"
+                            : "No preview available";
+
+
+                    if (!song.preview_url) {
+
+                        previewButton.disabled = true;
+
+                    }
+
+
+                    previewButton.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.stopPropagation();
+
+                            stopPreview();
+
+
+                            if (song.preview_url) {
+
+                                previewAudio =
+                                    new Audio(song.preview_url);
+
+                                previewAudio.play().catch(
+                                    function () {}
+                                );
+
+                            }
+
+                        }
+                    );
+
+
+                    row.appendChild(artwork);
+                    row.appendChild(info);
+                    row.appendChild(previewButton);
+
+
+                    row.addEventListener(
+                        "click",
+                        function () {
+
+                            stopPreview();
+                            selectSong(song);
+
+                        }
+                    );
+
+
+                    resultsBox.appendChild(row);
+
+                });
+
+
+                resultsBox.style.display = "block";
+
+            }
+
+
+            searchInput.addEventListener(
+                "input",
+                function () {
+
+                    const query =
+                        searchInput.value.trim();
+
+
+                    clearTimeout(debounceTimer);
+                    stopPreview();
+
+
+                    if (query.length === 0) {
+
+                        clearResults();
+                        setStatus("", "");
+
+                        return;
+
+                    }
+
+
+                    setStatus(
+                        "Searching for songs...",
+                        "song-status-loading"
+                    );
+
+
+                    debounceTimer =
+                        setTimeout(
+                            function () {
+
+                                fetch(
+                                    "/api/search-song?q=" +
+                                    encodeURIComponent(query)
+                                )
+                                    .then(
+                                        function (response) {
+
+                                            if (!response.ok) {
+
+                                                throw new Error(
+                                                    "Search request failed"
+                                                );
+
+                                            }
+
+                                            return response.json();
+
+                                        }
+                                    )
+                                    .then(
+                                        function (data) {
+
+                                            renderResults(data);
+
+                                        }
+                                    )
+                                    .catch(
+                                        function () {
+
+                                            clearResults();
+
+                                            setStatus(
+                                                "Unable to search for songs. Please try again.",
+                                                "song-status-error"
+                                            );
+
+                                        }
+                                    );
+
+                            },
+                            400
+                        );
+
+                }
+            );
+
+
+            clearButton.addEventListener(
+                "click",
+                function () {
+
+                    fieldTrackId.value = "";
+                    fieldTrackName.value = "";
+                    fieldArtistName.value = "";
+                    fieldArtworkUrl.value = "";
+                    fieldPreviewUrl.value = "";
+
+                    actionField.value = "clear";
+
+                    selectedBox.style.display = "none";
+
+                    selectedArt.src = "";
+                    selectedName.textContent = "";
+                    selectedArtist.textContent = "";
+
+                    searchInput.value = "";
+
+                    clearResults();
+
+                    setStatus("", "");
+
+                    stopPreview();
+
+                }
+            );
+
+
+        })();
+
+    </script>
+
+</body>
+
+</html>
