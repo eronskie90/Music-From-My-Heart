@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, jsonify, session
 import json
 import os
-import secrets
+import gc
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
 
+import torch
 from transformers import pipeline, MarianTokenizer, MarianMTModel
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -26,18 +27,16 @@ app.config["PHOTO_FOLDER"] = PHOTO_FOLDER
 os.makedirs(PHOTO_FOLDER, exist_ok=True)
 
 
-tokenizer = MarianTokenizer.from_pretrained(
-    "Helsinki-NLP/opus-mt-tl-en"
-)
+# =========================
+# MODEL SETTINGS
+# =========================
 
-translation_model = MarianMTModel.from_pretrained(
-    "Helsinki-NLP/opus-mt-tl-en"
-)
+TRANSLATION_MODEL_NAME = "Helsinki-NLP/opus-mt-tl-en"
+EMOTION_MODEL_NAME = "j-hartmann/emotion-english-distilroberta-base"
 
-emotion_classifier = pipeline(
-    "text-classification",
-    model="j-hartmann/emotion-english-distilroberta-base"
-)
+translation_tokenizer = None
+translation_model = None
+emotion_classifier = None
 
 
 # =========================
@@ -54,12 +53,7 @@ def load_entries():
 
 
 def save_entries(entries):
-    with open(
-        ENTRIES_FILE,
-        "w",
-        encoding="utf-8"
-    ) as file:
-
+    with open(ENTRIES_FILE, "w", encoding="utf-8") as file:
         json.dump(
             entries,
             file,
@@ -70,28 +64,15 @@ def save_entries(entries):
 
 def load_settings():
     try:
-        with open(
-            SETTINGS_FILE,
-            "r",
-            encoding="utf-8"
-        ) as file:
-
+        with open(SETTINGS_FILE, "r", encoding="utf-8") as file:
             return json.load(file)
 
-    except (
-        FileNotFoundError,
-        json.JSONDecodeError
-    ):
+    except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
 
 def save_settings(settings):
-    with open(
-        SETTINGS_FILE,
-        "w",
-        encoding="utf-8"
-    ) as file:
-
+    with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
         json.dump(
             settings,
             file,
@@ -116,34 +97,138 @@ def is_unlocked():
 
 
 # =========================
-# TRANSLATION / EMOTION
+# LOAD TRANSLATION MODEL
+# =========================
+
+def load_translation_model():
+    global translation_tokenizer
+    global translation_model
+
+    if (
+        translation_tokenizer is not None
+        and translation_model is not None
+    ):
+        return
+
+    print("Loading translation model...")
+
+    translation_tokenizer = MarianTokenizer.from_pretrained(
+        TRANSLATION_MODEL_NAME
+    )
+
+    translation_model = MarianMTModel.from_pretrained(
+        TRANSLATION_MODEL_NAME,
+        low_cpu_mem_usage=True
+    )
+
+    translation_model.eval()
+
+    print("Translation model loaded.")
+
+
+# =========================
+# LOAD EMOTION MODEL
+# =========================
+
+def load_emotion_model():
+    global emotion_classifier
+
+    if emotion_classifier is not None:
+        return
+
+    print("Loading emotion model...")
+
+    emotion_classifier = pipeline(
+        "text-classification",
+        model=EMOTION_MODEL_NAME,
+        device=-1
+    )
+
+    print("Emotion model loaded.")
+
+
+# =========================
+# TRANSLATION
 # =========================
 
 def translate_to_english(text):
-    inputs = tokenizer(
+    global translation_tokenizer
+    global translation_model
+
+    load_translation_model()
+
+    inputs = translation_tokenizer(
         [text],
         return_tensors="pt",
-        padding=True
+        padding=True,
+        truncation=True,
+        max_length=512
     )
 
-    translated = translation_model.generate(
-        **inputs
-    )
+    with torch.inference_mode():
 
-    return tokenizer.batch_decode(
+        translated = translation_model.generate(
+            **inputs,
+            max_length=512
+        )
+
+    result = translation_tokenizer.batch_decode(
         translated,
         skip_special_tokens=True
     )[0]
 
+    del inputs
+    del translated
+
+    return result
+
+
+# =========================
+# EMOTION DETECTION
+# =========================
 
 def detect_emotion(text):
+    global translation_tokenizer
+    global translation_model
+    global emotion_classifier
+
+    text = text.strip()
+
+    if not text:
+        return "neutral"
+
+    # Translate first.
     english_text = translate_to_english(text)
 
+    # Free translation model memory before loading emotion model.
+    translation_tokenizer = None
+    translation_model = None
+
+    gc.collect()
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    # Load emotion model only after translation model is released.
+    load_emotion_model()
+
     result = emotion_classifier(
-        english_text
+        english_text,
+        truncation=True,
+        max_length=512
     )[0]
 
-    return result["label"]
+    emotion = result["label"]
+
+    # Release emotion model after prediction.
+    emotion_classifier = None
+
+    gc.collect()
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    return emotion
 
 
 # =========================
@@ -448,16 +533,24 @@ def save():
 
         return redirect("/lock")
 
-    title = request.form["title"]
+    title = request.form.get(
+        "title",
+        ""
+    ).strip()
 
-    entry = request.form["entry"]
+    entry = request.form.get(
+        "entry",
+        ""
+    ).strip()
 
-    entry_date = request.form["date"]
+    entry_date = request.form.get(
+        "date",
+        ""
+    ).strip()
 
     detected_emotion = detect_emotion(
         entry
     )
-
 
     song_track_id = request.form.get(
         "song_track_id",
@@ -483,7 +576,6 @@ def save():
         "song_preview_url",
         ""
     ).strip()
-
 
     song = None
 
@@ -511,13 +603,11 @@ def save():
 
         }
 
-
     photos = request.files.getlist(
         "photos"
     )
 
     photo_filenames = []
-
 
     for photo in photos:
 
@@ -537,7 +627,6 @@ def save():
             photo_filenames.append(
                 photo_filename
             )
-
 
     new_entry = {
 
@@ -560,7 +649,6 @@ def save():
             photo_filenames
 
     }
-
 
     entries = load_entries()
 
@@ -627,17 +715,24 @@ def update(index):
 
         return redirect("/")
 
+    title = request.form.get(
+        "title",
+        ""
+    ).strip()
 
-    title = request.form["title"]
+    entry = request.form.get(
+        "entry",
+        ""
+    ).strip()
 
-    entry = request.form["entry"]
-
-    entry_date = request.form["date"]
+    entry_date = request.form.get(
+        "date",
+        ""
+    ).strip()
 
     detected_emotion = detect_emotion(
         entry
     )
-
 
     old_song = entries[index].get(
         "song"
@@ -648,12 +743,10 @@ def update(index):
         []
     )
 
-
     song_action = request.form.get(
         "song_action",
         ""
     ).strip()
-
 
     if song_action == "clear":
 
@@ -686,7 +779,6 @@ def update(index):
             ""
         ).strip()
 
-
         if (
             song_track_id
             and song_track_name
@@ -715,13 +807,11 @@ def update(index):
 
             song = old_song
 
-
     photos = request.files.getlist(
         "photos"
     )
 
     photo_filenames = old_photos.copy()
-
 
     for photo in photos:
 
@@ -741,7 +831,6 @@ def update(index):
             photo_filenames.append(
                 photo_filename
             )
-
 
     entries[index] = {
 
@@ -764,7 +853,6 @@ def update(index):
             photo_filenames
 
     }
-
 
     save_entries(
         entries
@@ -796,7 +884,6 @@ def delete(index):
 
         return redirect("/")
 
-
     entry = entries[index]
 
     song = entry.get(
@@ -807,7 +894,6 @@ def delete(index):
         "photos",
         []
     )
-
 
     if isinstance(
         song,
@@ -827,7 +913,6 @@ def delete(index):
                 song_path
             )
 
-
     for photo in photos:
 
         photo_path = os.path.join(
@@ -842,7 +927,6 @@ def delete(index):
             os.remove(
                 photo_path
             )
-
 
     entries.pop(index)
 
