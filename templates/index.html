@@ -85,52 +85,6 @@
                                         <p class="entry-date">{{ item.date }}</p>
                                     </div>
 
-                                    <div class="emotion">
-
-                                        {% if item.mood == "joy" %}
-
-                                            <div class="emotion-face">😊</div>
-                                            <span>Joy</span>
-
-                                        {% elif item.mood == "sadness" %}
-
-                                            <div class="emotion-face">😢</div>
-                                            <span>Sadness</span>
-
-                                        {% elif item.mood == "anger" %}
-
-                                            <div class="emotion-face">😠</div>
-                                            <span>Anger</span>
-
-                                        {% elif item.mood == "fear" %}
-
-                                            <div class="emotion-face">😨</div>
-                                            <span>Fear</span>
-
-                                        {% elif item.mood == "love" %}
-
-                                            <div class="emotion-face">🥰</div>
-                                            <span>Love</span>
-
-                                        {% elif item.mood == "surprise" %}
-
-                                            <div class="emotion-face">😲</div>
-                                            <span>Surprise</span>
-
-                                        {% elif item.mood == "disgust" %}
-
-                                            <div class="emotion-face">🤢</div>
-                                            <span>Disgust</span>
-
-                                        {% else %}
-
-                                            <div class="emotion-face">😐</div>
-                                            <span>{{ item.mood }}</span>
-
-                                        {% endif %}
-
-                                    </div>
-
                                 </div>
 
                                 <div class="line"></div>
@@ -219,7 +173,7 @@
 
                                                 {% else %}
 
-                                                    <p class="ai-note">
+                                                    <p class="song-note">
                                                         No preview available for this track.
                                                     </p>
 
