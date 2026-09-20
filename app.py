@@ -1,12 +1,9 @@
 from flask import Flask, render_template, request, redirect, jsonify, session
 import json
 import os
-import gc
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
 
-import torch
-from transformers import pipeline, MarianTokenizer, MarianMTModel
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -25,18 +22,6 @@ ENTRIES_FILE = "entries.json"
 app.config["PHOTO_FOLDER"] = PHOTO_FOLDER
 
 os.makedirs(PHOTO_FOLDER, exist_ok=True)
-
-
-# =========================
-# MODEL SETTINGS
-# =========================
-
-TRANSLATION_MODEL_NAME = "Helsinki-NLP/opus-mt-tl-en"
-EMOTION_MODEL_NAME = "j-hartmann/emotion-english-distilroberta-base"
-
-translation_tokenizer = None
-translation_model = None
-emotion_classifier = None
 
 
 # =========================
@@ -94,141 +79,6 @@ def lock_is_configured():
 
 def is_unlocked():
     return session.get("unlocked") is True
-
-
-# =========================
-# LOAD TRANSLATION MODEL
-# =========================
-
-def load_translation_model():
-    global translation_tokenizer
-    global translation_model
-
-    if (
-        translation_tokenizer is not None
-        and translation_model is not None
-    ):
-        return
-
-    print("Loading translation model...")
-
-    translation_tokenizer = MarianTokenizer.from_pretrained(
-        TRANSLATION_MODEL_NAME
-    )
-
-    translation_model = MarianMTModel.from_pretrained(
-        TRANSLATION_MODEL_NAME,
-        low_cpu_mem_usage=True
-    )
-
-    translation_model.eval()
-
-    print("Translation model loaded.")
-
-
-# =========================
-# LOAD EMOTION MODEL
-# =========================
-
-def load_emotion_model():
-    global emotion_classifier
-
-    if emotion_classifier is not None:
-        return
-
-    print("Loading emotion model...")
-
-    emotion_classifier = pipeline(
-        "text-classification",
-        model=EMOTION_MODEL_NAME,
-        device=-1
-    )
-
-    print("Emotion model loaded.")
-
-
-# =========================
-# TRANSLATION
-# =========================
-
-def translate_to_english(text):
-    global translation_tokenizer
-    global translation_model
-
-    load_translation_model()
-
-    inputs = translation_tokenizer(
-        [text],
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=512
-    )
-
-    with torch.inference_mode():
-
-        translated = translation_model.generate(
-            **inputs,
-            max_length=512
-        )
-
-    result = translation_tokenizer.batch_decode(
-        translated,
-        skip_special_tokens=True
-    )[0]
-
-    del inputs
-    del translated
-
-    return result
-
-
-# =========================
-# EMOTION DETECTION
-# =========================
-
-def detect_emotion(text):
-    global translation_tokenizer
-    global translation_model
-    global emotion_classifier
-
-    text = text.strip()
-
-    if not text:
-        return "neutral"
-
-    # Translate first.
-    english_text = translate_to_english(text)
-
-    # Free translation model memory before loading emotion model.
-    translation_tokenizer = None
-    translation_model = None
-
-    gc.collect()
-
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
-    # Load emotion model only after translation model is released.
-    load_emotion_model()
-
-    result = emotion_classifier(
-        english_text,
-        truncation=True,
-        max_length=512
-    )[0]
-
-    emotion = result["label"]
-
-    # Release emotion model after prediction.
-    emotion_classifier = None
-
-    gc.collect()
-
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
-    return emotion
 
 
 # =========================
@@ -548,10 +398,6 @@ def save():
         ""
     ).strip()
 
-    detected_emotion = detect_emotion(
-        entry
-    )
-
     song_track_id = request.form.get(
         "song_track_id",
         ""
@@ -638,9 +484,6 @@ def save():
 
         "entry":
             entry,
-
-        "mood":
-            detected_emotion,
 
         "song":
             song,
@@ -729,10 +572,6 @@ def update(index):
         "date",
         ""
     ).strip()
-
-    detected_emotion = detect_emotion(
-        entry
-    )
 
     old_song = entries[index].get(
         "song"
@@ -842,9 +681,6 @@ def update(index):
 
         "entry":
             entry,
-
-        "mood":
-            detected_emotion,
 
         "song":
             song,
